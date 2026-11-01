@@ -1,122 +1,103 @@
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:provider/provider.dart';
 
-void main() {
-  runApp(const MyApp());
+import 'app.dart';
+import 'core/config/env.dart';
+import 'core/logging/app_logger.dart';
+import 'data/local/sqflite_task_local_data_source.dart';
+import 'data/remote/dio_client.dart';
+import 'data/remote/mockapi_task_remote_data_source.dart';
+import 'firebase_options.dart';
+import 'providers/auth_provider.dart';
+import 'providers/connectivity_provider.dart';
+import 'providers/feed_provider.dart';
+import 'providers/pomodoro_provider.dart';
+import 'providers/pomodoro_reward_recorder.dart';
+import 'providers/task_provider.dart';
+import 'providers/wallet_provider.dart';
+import 'repositories/cached_task_repository.dart';
+import 'repositories/firebase_auth_repository.dart';
+import 'repositories/firebase_feed_repository.dart';
+import 'repositories/firestore_wallet_repository.dart';
+import 'repositories/prefs_pomodoro_settings_repository.dart';
+import 'services/analytics_service.dart';
+import 'services/connectivity_service.dart';
+import 'services/duration_estimator.dart';
+import 'services/gemini_duration_estimator.dart';
+import 'services/pomodoro_alarm.dart';
+import 'services/push_notification_service.dart';
+
+/// Recibe los mensajes de FCM con la app cerrada o en segundo plano. Debe ser
+/// una función de primer nivel; Android muestra la notificación por sí solo.
+@pragma('vm:entry-point')
+Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  AppLogger.info('fcm', 'Mensaje en segundo plano ${message.messageId}');
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+/// Punto de entrada y "raíz de composición": el único lugar donde se eligen
+/// las implementaciones concretas (Firebase, MockAPI, SQLite, Gemini) y se
+/// conectan. El resto del código solo conoce interfaces, por eso las pruebas
+/// pueden usar fakes sin tocar pantallas ni providers.
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  await initializeDateFormatting('es');
 
-  // This widget is the root of your application.
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: .fromSeed(seedColor: Colors.deepPurple),
-      ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
-    );
-  }
-}
-
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
-    return Scaffold(
-      appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: .center,
-          children: [
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
+  runApp(
+    MultiProvider(
+      providers: [
+        // Servicios sin estado: se leen con context.read.
+        Provider<AnalyticsService>(create: (_) => FirebaseAnalyticsService()),
+        Provider<DurationEstimator>(create: (_) => GeminiDurationEstimator()),
+        Provider<PushNotificationService>(
+          create: (_) => PushNotificationService(),
+          dispose: (_, service) => service.dispose(),
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ),
-    );
-  }
+
+        // Estado global.
+        ChangeNotifierProvider(create: (_) => ConnectivityProvider(ConnectivityPlusService())),
+        ChangeNotifierProvider(create: (_) => AuthProvider(FirebaseAuthRepository())),
+
+        // Estos dependen del usuario: cada vez que cambia la sesión, el
+        // ProxyProvider les pasa el usuario nuevo con setUser.
+        ChangeNotifierProxyProvider<AuthProvider, TaskProvider>(
+          create: (_) => TaskProvider(
+            repository: CachedTaskRepository(
+              remote: MockApiTaskRemoteDataSource(createDioClient()),
+              local: SqfliteTaskLocalDataSource(),
+            ),
+          ),
+          update: (_, auth, tasks) => tasks!..setUser(auth.user?.uid),
+        ),
+        ChangeNotifierProxyProvider<AuthProvider, WalletProvider>(
+          create: (_) => WalletProvider(FirestoreWalletRepository()),
+          update: (_, auth, wallet) => wallet!..setUser(auth.user?.uid),
+        ),
+        ChangeNotifierProxyProvider<AuthProvider, FeedProvider>(
+          create: (_) => FeedProvider(FirebaseFeedRepository()),
+          update: (_, auth, feed) => feed!..setUser(auth.user),
+        ),
+
+        // El temporizador registra su avance a través de las tareas y el
+        // monedero, pero solo conoce la interfaz PomodoroProgressRecorder.
+        ChangeNotifierProvider(
+          create: (context) => PomodoroProvider(
+            recorder: PomodoroRewardRecorder(
+              tasks: context.read<TaskProvider>(),
+              wallet: context.read<WalletProvider>(),
+            ),
+            settingsRepository: PrefsPomodoroSettingsRepository(),
+            demoMode: Env.fastPomodoro,
+            alarm: LocalNotificationPomodoroAlarm(),
+          )..loadSettings(),
+        ),
+      ],
+      child: const HamtimerApp(),
+    ),
+  );
 }
