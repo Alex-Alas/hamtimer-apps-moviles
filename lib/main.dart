@@ -1,5 +1,12 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:hamtimer/features/feed/data/repository/firebase_feed_repository.dart';
+import 'package:hamtimer/features/feed/domain/repositories/feed_repository.dart';
+import 'package:hamtimer/features/feed/domain/usecases/publish_post_usecase.dart';
+import 'package:hamtimer/features/feed/domain/usecases/set_like_usecase.dart';
+import 'package:hamtimer/features/feed/domain/usecases/watch_feed_usecase.dart';
+import 'package:hamtimer/features/feed/presentation/providers/feed_provider.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
 
@@ -17,6 +24,8 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await initializeDateFormatting('es');
+  
+  final feedRepository = FirebaseFeedRepository();
 
   runApp(
     MultiProvider(
@@ -34,6 +43,14 @@ Future<void> main() async {
         // ── Alex: WalletProvider con sus casos de uso (ChangeNotifierProxyProvider con AuthProvider) ──
 
         // ── Armando: FeedProvider con sus casos de uso y PushNotificationService ──
+        // ** Ready to launch, depends on AuthProvider. When implemented uncomment the provider below.
+        // ChangeNotifierProxyProvider<AuthProvider, FeedProvider>(
+        //   create: (_) => FeedProvider(
+        //     watchFeed: WatchFeedUseCase(feedRepository),
+        //     publishPost: PublishPostUseCase(feedRepository),
+        //     setLike: SetLikeUseCase(feedRepository)
+        //     ),
+        //   update: (_, auth, feed) => feed!..setUser(auth.user)),
 
         // ── Alex M.: PomodoroProvider con sus casos de uso ──
 
