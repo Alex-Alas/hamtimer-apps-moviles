@@ -12,4 +12,3 @@ class EarnPointsUseCase {
     await _repository.addPoints(uid, points);
   }
 }
-

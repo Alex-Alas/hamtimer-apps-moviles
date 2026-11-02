@@ -8,4 +8,3 @@ class EnsureWalletUseCase {
 
   Future<void> call(String uid) => _repository.ensureExists(uid);
 }
-

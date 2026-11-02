@@ -44,4 +44,3 @@ class FaceFilterPainter extends CustomPainter {
       oldDelegate.mirror != mirror ||
       oldDelegate.filter != filter;
 }
-

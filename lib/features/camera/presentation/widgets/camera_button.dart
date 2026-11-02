@@ -30,4 +30,3 @@ class CameraButton extends StatelessWidget {
     );
   }
 }
-

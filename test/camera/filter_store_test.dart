@@ -32,4 +32,3 @@ void main() {
     expect(selected?.id, 'hamster');
   });
 }
-

@@ -91,4 +91,3 @@ class _PriceTag extends StatelessWidget {
     );
   }
 }
-

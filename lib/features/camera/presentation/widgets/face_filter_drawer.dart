@@ -63,4 +63,3 @@ abstract final class FaceFilterDrawer {
     }
   }
 }
-

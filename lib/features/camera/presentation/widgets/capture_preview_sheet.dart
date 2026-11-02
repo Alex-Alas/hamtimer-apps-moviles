@@ -100,4 +100,3 @@ class CapturePreviewSheet extends StatelessWidget {
     );
   }
 }
-
