@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:hamtimer/features/camera/presentation/providers/wallet_provider.dart';
 import 'package:hamtimer/shared/logging/app_logger.dart';
 import 'package:hamtimer/shared/services/push_notification_service.dart';
 import 'package:hamtimer/shared/widgets/feedback.dart';
@@ -24,21 +25,25 @@ class HomeShell extends StatefulWidget {
 class _HomeShellState extends State<HomeShell> {
   HomeTab _tab = HomeTab.dashboard;
 
-  // ** Ready to launch, depends on WalletProvider
-  // StreamSubscription<PushMessage>? _pushSubscription;
+  StreamSubscription<PushMessage>? _pushSubscription;
 
   @override
   void initState() {
     super.initState();
     unawaited(context.read<AnalyticsService>().logScreen(_tab.screenName));
 
-    // ** Ready to launch, depends on WalletProvider
-    // final push = context.read<PushNotificationService>();
-    // _pushSubscription = push.messages.listen(_onPushMessage);
-    // // Se pide el permiso de notificaciones ya con sesión, no en el login.
-    // push.init().catchError((Object error) {
-    //   AppLogger.warning('fcm', 'No se pudo iniciar FCM: $error');
-    // });
+    final push = context.read<PushNotificationService>();
+    _pushSubscription = push.messages.listen(_onPushMessage);
+    // Se pide el permiso de notificaciones ya con sesión, no en el login.
+    push.init().catchError((Object error) {
+      AppLogger.warning('fcm', 'No se pudo iniciar FCM: $error');
+    });
+  }
+
+  @override
+  void dispose() {
+    _pushSubscription?.cancel();
+    super.dispose();
   }
 
   void _selectTab(HomeTab tab) {
@@ -47,31 +52,30 @@ class _HomeShellState extends State<HomeShell> {
     context.read<AnalyticsService>().logScreen(tab.screenName);
   }
 
-    /// Notificación de FCM en primer plano o tocada desde la bandeja. Si trae
+  /// Notificación de FCM en primer plano o tocada desde la bandeja. Si trae
   /// `campaignId`, regala puntos (una sola vez por campaña).
-  /// ** Ready to launch, waiting for WalletProvider to uncomment
-  // Future<void> _onPushMessage(PushMessage message) async {
-  //   final wallet = context.read<WalletProvider>();
-  //   final analytics = context.read<AnalyticsService>();
-  //   final campaignId = message.campaignId;
-  //   if (campaignId != null) {
-  //     try {
-  //       final points = await wallet.claimCampaign(campaignId);
-  //       await analytics.logEvent('campaign_claimed', {'campaign': campaignId, 'points': points});
-  //       if (!mounted) return;
-  //       AppFeedback.show(
-  //         context,
-  //         points > 0 ? '🎁 ¡Recibiste $points puntos para filtros!' : 'Ya cobraste esta campaña',
-  //       );
-  //     } on Exception catch (error) {
-  //       AppLogger.error('fcm', 'No se pudo cobrar la campaña', error);
-  //     }
-  //     return;
-  //   }
-  //   if (!mounted) return;
-  //   final text = [message.title, message.body].whereType<String>().join(': ');
-  //   if (text.isNotEmpty) AppFeedback.show(context, text);
-  // }
+  Future<void> _onPushMessage(PushMessage message) async {
+    final wallet = context.read<WalletProvider>();
+    final analytics = context.read<AnalyticsService>();
+    final campaignId = message.campaignId;
+    if (campaignId != null) {
+      try {
+        final points = await wallet.claimCampaign(campaignId);
+        await analytics.logEvent('campaign_claimed', {'campaign': campaignId, 'points': points});
+        if (!mounted) return;
+        AppFeedback.show(
+          context,
+          points > 0 ? '🎁 ¡Recibiste $points puntos para filtros!' : 'Ya cobraste esta campaña',
+        );
+      } on Exception catch (error) {
+        AppLogger.error('fcm', 'No se pudo cobrar la campaña', error);
+      }
+      return;
+    }
+    if (!mounted) return;
+    final text = [message.title, message.body].whereType<String>().join(': ');
+    if (text.isNotEmpty) AppFeedback.show(context, text);
+  }
 
   @override
   Widget build(BuildContext context) {
