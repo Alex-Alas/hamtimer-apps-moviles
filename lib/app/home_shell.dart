@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../features/camera/presentation/screens/camera_screen.dart';
 import '../shared/services/analytics_service.dart';
 import '../shared/widgets/bottom_nav_bar.dart';
 
@@ -40,17 +41,20 @@ class _HomeShellState extends State<HomeShell> {
         bottom: false,
         child: IndexedStack(
           index: _tab.index,
-          children: const [
+          children: [
             // ── Gisi: DashboardScreen ──
-            _Placeholder('Pantalla de Gisi (Tareas)'),
+            const _Placeholder('Pantalla de Gisi (Tareas)'),
             // ── Alex M.: PomodoroScreen ──
-            _Placeholder('Pantalla de Alex M. (Pomodoro)'),
+            const _Placeholder('Pantalla de Alex M. (Pomodoro)'),
             // ── Nehemías: NewTaskScreen ──
-            _Placeholder('Pantalla de Nehemías (Nueva tarea)'),
+            const _Placeholder('Pantalla de Nehemías (Nueva tarea)'),
             // ── Alex: CameraScreen ──
-            _Placeholder('Pantalla de Alex (Cámara)'),
+            CameraScreen(
+              isActive: _tab == HomeTab.camera,
+              onPublished: () => _selectTab(HomeTab.feed),
+            ),
             // ── Armando: FeedScreen ──
-            _Placeholder('Pantalla de Armando (Feed)'),
+            const _Placeholder('Pantalla de Armando (Feed)'),
           ],
         ),
       ),
