@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:hamtimer/features/camera/presentation/providers/wallet_provider.dart';
+import 'package:hamtimer/features/feed/presentation/screens/feed_screen.dart';
 import 'package:hamtimer/shared/logging/app_logger.dart';
 import 'package:hamtimer/shared/services/push_notification_service.dart';
 import 'package:hamtimer/shared/widgets/feedback.dart';
@@ -116,7 +117,7 @@ class _HomeShellState extends State<HomeShell> {
               onPublished: () => _selectTab(HomeTab.feed),
             ),
             // ── Armando: FeedScreen ──
-            const _Placeholder('Pantalla de Armando (Feed)'),
+            const FeedScreen(),
           ],
         ),
       ),
