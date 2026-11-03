@@ -38,7 +38,7 @@ class FirestoreWalletRepository implements WalletRepository {
 
   /// Crea el documento si no existe, sin transacción para que funcione sin
   /// conexión (`increment(0)` y `arrayUnion([])` dejan 0 y `[]` si el campo
-  /// no existe, y no cambian nada si ya existe) 
+  /// no existe, y no cambian nada si ya existe)
   @override
   Future<void> ensureExists(String uid) => _userDoc(uid).set({
     'points': FieldValue.increment(0),
@@ -85,4 +85,3 @@ class FirestoreWalletRepository implements WalletRepository {
   static Set<String> _stringSet(Object? value) =>
       value is List ? value.whereType<String>().toSet() : <String>{};
 }
-

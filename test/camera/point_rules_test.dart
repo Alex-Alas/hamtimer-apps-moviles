@@ -16,4 +16,3 @@ void main() {
     expect(FaceFilter.byId('no-existe').id, 'hamster');
   });
 }
-
