@@ -9,4 +9,3 @@ class ClaimCampaignUseCase {
 
   Future<int> call(String uid, String campaignId) => _repository.claimCampaign(uid, campaignId);
 }
-

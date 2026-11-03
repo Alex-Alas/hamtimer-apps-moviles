@@ -1,8 +1,15 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:hamtimer/shared/logging/app_logger.dart';
 import 'package:hamtimer/shared/services/push_notification_service.dart';
+import 'package:hamtimer/features/feed/data/repository/firebase_feed_repository.dart';
+import 'package:hamtimer/features/feed/domain/repositories/feed_repository.dart';
+import 'package:hamtimer/features/feed/domain/usecases/publish_post_usecase.dart';
+import 'package:hamtimer/features/feed/domain/usecases/set_like_usecase.dart';
+import 'package:hamtimer/features/feed/domain/usecases/watch_feed_usecase.dart';
+import 'package:hamtimer/features/feed/presentation/providers/feed_provider.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
 
@@ -48,6 +55,8 @@ Future<void> main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
   await initializeDateFormatting('es');
+  
+  final feedRepository = FirebaseFeedRepository();
 
   // final walletRepository = FirestoreWalletRepository();
   //final taskRepository = CachedTaskRepository(
@@ -96,6 +105,14 @@ Future<void> main() async {
           create: (_) => PushNotificationService(),
           dispose: (_, service) => service.dispose(),
         ),
+        // ** Ready to launch, depends on AuthProvider. When implemented uncomment the provider below.
+        // ChangeNotifierProxyProvider<AuthProvider, FeedProvider>(
+        //   create: (_) => FeedProvider(
+        //     watchFeed: WatchFeedUseCase(feedRepository),
+        //     publishPost: PublishPostUseCase(feedRepository),
+        //     setLike: SetLikeUseCase(feedRepository)
+        //     ),
+        //   update: (_, auth, feed) => feed!..setUser(auth.user)),
 
         // ── Alex M.: PomodoroProvider con sus casos de uso ──
 

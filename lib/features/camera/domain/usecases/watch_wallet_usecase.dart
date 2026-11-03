@@ -9,4 +9,3 @@ class WatchWalletUseCase {
 
   Stream<Wallet> call(String uid) => _repository.watch(uid);
 }
-
