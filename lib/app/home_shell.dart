@@ -10,6 +10,8 @@ import 'package:provider/provider.dart';
 
 import '../features/tasks/presentation/providers/task_provider.dart';
 import '../features/tasks/presentation/screens/dashboard_screen.dart';
+import '../features/tasks/presentation/screens/new_task_screen.dart';
+import '../features/tasks/domain/entities/task.dart';
 import '../features/camera/presentation/screens/camera_screen.dart';
 import '../shared/services/analytics_service.dart';
 import '../shared/widgets/bottom_nav_bar.dart';
@@ -29,6 +31,7 @@ class HomeShell extends StatefulWidget {
 
 class _HomeShellState extends State<HomeShell> {
   HomeTab _tab = HomeTab.dashboard;
+  int _formSession = 0;
 
   StreamSubscription<PushMessage>? _pushSubscription;
   late final ConnectivityProvider _connectivity;
@@ -59,8 +62,22 @@ class _HomeShellState extends State<HomeShell> {
 
   void _selectTab(HomeTab tab) {
     if (tab == _tab) return;
-    setState(() => _tab = tab);
+    setState(() {
+    _tab = tab;
+    if (tab == HomeTab.newTask) _formSession++;
+  });
     context.read<AnalyticsService>().logScreen(tab.screenName);
+  }
+
+  void _onTaskCreated(Task task) {
+    _selectTab(HomeTab.dashboard);
+    final offline = !context.read<ConnectivityProvider>().isOnline;
+    AppFeedback.show(
+      context,
+      offline
+          ? 'Tarea "${task.title}" guardada; se enviará al volver la red'
+          : 'Tarea "${task.title}" creada',
+    );
   }
 
   void _onConnectivityChanged() {
@@ -110,7 +127,11 @@ class _HomeShellState extends State<HomeShell> {
             // ── Alex M.: PomodoroScreen ──
             const _Placeholder('Pantalla de Alex M. (Pomodoro)'),
             // ── Nehemías: NewTaskScreen ──
-            const _Placeholder('Pantalla de Nehemías (Nueva tarea)'),
+            NewTaskScreen(
+              key: ValueKey(_formSession),
+              onClose: () => _selectTab(HomeTab.dashboard),
+              onCreated: _onTaskCreated,
+            ),
             // ── Alex: CameraScreen ──
             CameraScreen(
               isActive: _tab == HomeTab.camera,
