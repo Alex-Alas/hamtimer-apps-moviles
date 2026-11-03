@@ -104,9 +104,8 @@ class _HomeShellState extends State<HomeShell> {
         child: IndexedStack(
           index: _tab.index,
           children: [
-            // ── Gisi: DashboardScreen ──
-            DashboardScreen(),
-            const _Placeholder('Pantalla de Gisi (Tareas)'),
+            // ── Gisi: DasshboardScreen ──
+            const DashboardScreen(),
             // ── Alex M.: PomodoroScreen ──
             const _Placeholder('Pantalla de Alex M. (Pomodoro)'),
             // ── Nehemías: NewTaskScreen ──
