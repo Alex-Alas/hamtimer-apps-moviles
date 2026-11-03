@@ -33,27 +33,32 @@ class FilterCard extends StatelessWidget {
       radius: AppRadius.lg,
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
       semanticLabel: isOwned ? 'Usar ${filter.name}' : 'Comprar ${filter.name}',
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Opacity(
-            opacity: isOwned ? 1 : 0.45,
-            child: Text(filter.emoji, style: const TextStyle(fontSize: 28)),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            filter.name,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-              color: isSelected ? AppColors.primary : AppColors.onSurface,
+      // La tienda tiene alto fijo: con la letra grande del sistema el texto
+      // se desbordaba, así que aquí se limita la escala a 1.15.
+      child: MediaQuery.withClampedTextScaling(
+        maxScaleFactor: 1.15,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Opacity(
+              opacity: isOwned ? 1 : 0.45,
+              child: Text(filter.emoji, style: const TextStyle(fontSize: 28)),
             ),
-          ),
-          const SizedBox(height: 2),
-          _PriceTag(filter: filter, isOwned: isOwned, canAfford: canAfford),
-        ],
+            const SizedBox(height: 4),
+            Text(
+              filter.name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                color: isSelected ? AppColors.primary : AppColors.onSurface,
+              ),
+            ),
+            const SizedBox(height: 2),
+            _PriceTag(filter: filter, isOwned: isOwned, canAfford: canAfford),
+          ],
+        ),
       ),
     );
   }
