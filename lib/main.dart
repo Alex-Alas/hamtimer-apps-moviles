@@ -29,6 +29,8 @@ import 'features/tasks/domain/usecases/get_task_page_usecase.dart';
 import 'features/tasks/domain/usecases/get_tasks_usecase.dart';
 import 'features/tasks/domain/usecases/update_task_usecase.dart';
 import 'features/tasks/presentation/providers/task_provider.dart';
+import 'features/tasks/data/datasource/gemini_duration_estimator.dart';
+import 'features/tasks/domain/repositories/duration_estimator.dart';
 import 'firebase_options.dart';
 import 'shared/providers/connectivity_provider.dart';
 import 'shared/services/analytics_service.dart';
@@ -40,6 +42,7 @@ import 'features/auth/domain/usecases/sign_up_usecase.dart';
 import 'features/auth/domain/usecases/watch_auth_state_usecase.dart';
 import 'shared/network/dio_client.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
+
 
 //Recibe los mensajes de FCM con la app cerrada o en segundo plano.
 @pragma('vm:entry-point')
@@ -126,6 +129,9 @@ Future<void> main() async {
         // ── Alex M.: PomodoroProvider con sus casos de uso ──
 
         // ── Nehemías: EstimateTaskDurationUseCase (Gemini) ──
+        Provider<DurationEstimator>(
+        create: (_) => GeminiDurationEstimator(),
+        ),
       ],
       child: const HamtimerApp(),
     ),

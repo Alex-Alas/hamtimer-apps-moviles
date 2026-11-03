@@ -12,6 +12,7 @@ import '../features/tasks/presentation/screens/dashboard_screen.dart';
 import '../features/camera/presentation/screens/camera_screen.dart';
 import '../shared/services/analytics_service.dart';
 import '../shared/widgets/bottom_nav_bar.dart';
+import '../shared/providers/connectivity_provider.dart';
 
 /// Contenedor de la app: barra inferior y las cinco pestañas en un
 /// [IndexedStack] (no se destruyen al cambiar de pestaña).
@@ -103,9 +104,8 @@ class _HomeShellState extends State<HomeShell> {
         child: IndexedStack(
           index: _tab.index,
           children: [
-            // ── Gisi: DashboardScreen ──
-            DashboardScreen(),
-            const _Placeholder('Pantalla de Gisi (Tareas)'),
+            // ── Gisi: DasshboardScreen ──
+            const DashboardScreen(),
             // ── Alex M.: PomodoroScreen ──
             const _Placeholder('Pantalla de Alex M. (Pomodoro)'),
             // ── Nehemías: NewTaskScreen ──
