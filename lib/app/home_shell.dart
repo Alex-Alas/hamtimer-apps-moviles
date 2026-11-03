@@ -12,6 +12,7 @@ import '../features/tasks/presentation/screens/dashboard_screen.dart';
 import '../features/camera/presentation/screens/camera_screen.dart';
 import '../shared/services/analytics_service.dart';
 import '../shared/widgets/bottom_nav_bar.dart';
+import '../shared/providers/connectivity_provider.dart';
 
 /// Contenedor de la app: barra inferior y las cinco pestañas en un
 /// [IndexedStack] (no se destruyen al cambiar de pestaña).
