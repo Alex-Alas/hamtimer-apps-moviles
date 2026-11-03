@@ -16,10 +16,21 @@ import 'features/camera/domain/usecases/earn_points_usecase.dart';
 import 'features/camera/domain/usecases/ensure_wallet_usecase.dart';
 import 'features/camera/domain/usecases/watch_wallet_usecase.dart';
 import 'features/camera/presentation/providers/wallet_provider.dart';
+import 'features/tasks/data/datasource/mockapi_task_remote_data_source.dart';
+import 'features/tasks/data/datasource/sqflite_task_local_data_source.dart';
+import 'features/tasks/data/repository/cached_task_repository.dart';
+import 'features/tasks/domain/usecases/create_task_usecase.dart';
+import 'features/tasks/domain/usecases/delete_task_usecase.dart';
+import 'features/tasks/domain/usecases/get_task_history_usecase.dart';
+import 'features/tasks/domain/usecases/get_task_page_usecase.dart';
+import 'features/tasks/domain/usecases/get_tasks_usecase.dart';
+import 'features/tasks/domain/usecases/update_task_usecase.dart';
+import 'features/tasks/presentation/providers/task_provider.dart';
 import 'firebase_options.dart';
 import 'shared/providers/connectivity_provider.dart';
 import 'shared/services/analytics_service.dart';
 import 'shared/services/connectivity_service.dart';
+import 'shared/network/dio_client.dart';
 
 //Recibe los mensajes de FCM con la app cerrada o en segundo plano.
 @pragma('vm:entry-point')
@@ -39,6 +50,10 @@ Future<void> main() async {
   await initializeDateFormatting('es');
 
   // final walletRepository = FirestoreWalletRepository();
+  //final taskRepository = CachedTaskRepository(
+  //  remote: MockApiTaskRemoteDataSource(createDioClient()),
+  //  local: SqfliteTaskLocalDataSource(),
+  //);
 
   runApp(
     MultiProvider(
@@ -52,7 +67,17 @@ Future<void> main() async {
         // ── Jade: AuthProvider (casos de uso de auth) ──
 
         // ── Gisi: TaskProvider con sus casos de uso (ChangeNotifierProxyProvider con AuthProvider) ──
-
+        ChangeNotifierProxyProvider<AuthProvider, TaskProvider>(
+          create: (_) => TaskProvider(
+            getTasks: GetTasksUseCase(taskRepository),
+            getTaskPage: GetTaskPageUseCase(taskRepository),
+            getTaskHistory: GetTaskHistoryUseCase(taskRepository),
+            createTask: CreateTaskUseCase(taskRepository),
+            updateTask: UpdateTaskUseCase(taskRepository),
+            deleteTask: DeleteTaskUseCase(taskRepository),
+          ),
+          update: (_, auth, tasks) => tasks!..setUser(auth.user?.uid),
+        ),
         // ── Alex: WalletProvider con sus casos de uso (ChangeNotifierProxyProvider con AuthProvider) ──
         //TODO: Se activa cuando exista el AuthProvider de Jade.
         ChangeNotifierProxyProvider<AuthProvider, WalletProvider>(
