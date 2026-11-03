@@ -17,4 +17,3 @@ class BuyFilterUseCase {
     return _repository.buyFilter(uid, filter);
   }
 }
-
