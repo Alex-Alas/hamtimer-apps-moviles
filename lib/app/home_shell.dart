@@ -7,8 +7,12 @@ import 'package:hamtimer/shared/services/push_notification_service.dart';
 import 'package:hamtimer/shared/widgets/feedback.dart';
 import 'package:provider/provider.dart';
 
+import '../features/tasks/presentation/providers/task_provider.dart';
+import '../features/tasks/presentation/screens/dashboard_screen.dart';
+import '../features/camera/presentation/screens/camera_screen.dart';
 import '../shared/services/analytics_service.dart';
 import '../shared/widgets/bottom_nav_bar.dart';
+import '../shared/providers/connectivity_provider.dart';
 
 /// Contenedor de la app: barra inferior y las cinco pestañas en un
 /// [IndexedStack] (no se destruyen al cambiar de pestaña).
@@ -26,11 +30,16 @@ class _HomeShellState extends State<HomeShell> {
   HomeTab _tab = HomeTab.dashboard;
 
   StreamSubscription<PushMessage>? _pushSubscription;
+  late final ConnectivityProvider _connectivity;
+  bool _wasOnline = true;
 
   @override
   void initState() {
     super.initState();
     unawaited(context.read<AnalyticsService>().logScreen(_tab.screenName));
+
+    _connectivity = context.read<ConnectivityProvider>()..addListener(_onConnectivityChanged);
+    _wasOnline = _connectivity.isOnline;
 
     final push = context.read<PushNotificationService>();
     _pushSubscription = push.messages.listen(_onPushMessage);
@@ -43,6 +52,7 @@ class _HomeShellState extends State<HomeShell> {
   @override
   void dispose() {
     _pushSubscription?.cancel();
+    _connectivity.removeListener(_onConnectivityChanged);
     super.dispose();
   }
 
@@ -50,6 +60,15 @@ class _HomeShellState extends State<HomeShell> {
     if (tab == _tab) return;
     setState(() => _tab = tab);
     context.read<AnalyticsService>().logScreen(tab.screenName);
+  }
+
+  void _onConnectivityChanged() {
+    final online = _connectivity.isOnline;
+    if (online && !_wasOnline) {
+      AppFeedback.show(context, 'Conexión recuperada: sincronizando tareas');
+      context.read<TaskProvider>().refresh();
+    }
+    _wasOnline = online;
   }
 
   /// Notificación de FCM en primer plano o tocada desde la bandeja. Si trae
@@ -84,17 +103,20 @@ class _HomeShellState extends State<HomeShell> {
         bottom: false,
         child: IndexedStack(
           index: _tab.index,
-          children: const [
-            // ── Gisi: DashboardScreen ──
-            _Placeholder('Pantalla de Gisi (Tareas)'),
+          children: [
+            // ── Gisi: DasshboardScreen ──
+            const DashboardScreen(),
             // ── Alex M.: PomodoroScreen ──
-            _Placeholder('Pantalla de Alex M. (Pomodoro)'),
+            const _Placeholder('Pantalla de Alex M. (Pomodoro)'),
             // ── Nehemías: NewTaskScreen ──
-            _Placeholder('Pantalla de Nehemías (Nueva tarea)'),
+            const _Placeholder('Pantalla de Nehemías (Nueva tarea)'),
             // ── Alex: CameraScreen ──
-            _Placeholder('Pantalla de Alex (Cámara)'),
+            CameraScreen(
+              isActive: _tab == HomeTab.camera,
+              onPublished: () => _selectTab(HomeTab.feed),
+            ),
             // ── Armando: FeedScreen ──
-            _Placeholder('Pantalla de Armando (Feed)'),
+            const _Placeholder('Pantalla de Armando (Feed)'),
           ],
         ),
       ),
