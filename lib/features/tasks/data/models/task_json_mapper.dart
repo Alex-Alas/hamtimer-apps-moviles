@@ -39,7 +39,7 @@ abstract final class TaskJsonMapper {
     'createdAt': DateTime.now().toUtc().toIso8601String(),
   };
 
-  /// Cuerpo del PUT: la tarea completa (PUT reemplaza el recurso).
+  /// Cuerpo del PUT: la tarea completa.
   static Map<String, dynamic> toJson(String userId, Task task) => {
     'id': task.id,
     'userId': userId,
