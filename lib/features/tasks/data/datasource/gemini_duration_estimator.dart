@@ -51,7 +51,7 @@ class GeminiDurationEstimator implements DurationEstimator {
       final prompt = buildPrompt(title: title, category: category, history: history);
       final response = await _dio.post<Map<String, dynamic>>(
         'models/$_model:generateContent',
-        options: Options(headers: {'x-goog-api-key': _apiKey}),
+        queryParameters: {'key': _apiKey},
         data: buildRequest(prompt),
       );
       final text = extractText(response.data);

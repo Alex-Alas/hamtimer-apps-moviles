@@ -63,7 +63,7 @@ void main() {
     expect(estimate.pomodoros, 3);
     expect(estimate.source, EstimateSource.ai);
     expect(sent?.path, endsWith(':generateContent'));
-    expect(sent?.headers['x-goog-api-key'], 'clave-de-prueba');
+    expect(sent?.queryParameters['key'], 'clave-de-prueba');
 
     sent = null;
     final offline = await GeminiDurationEstimator(dio: dio, apiKey: '').estimate(
