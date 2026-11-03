@@ -41,8 +41,14 @@ import 'features/auth/domain/usecases/sign_out_usecase.dart';
 import 'features/auth/domain/usecases/sign_up_usecase.dart';
 import 'features/auth/domain/usecases/watch_auth_state_usecase.dart';
 import 'shared/network/dio_client.dart';
+import 'shared/config/env.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
-
+import 'features/pomodoro/data/datasource/local_notification_pomodoro_alarm.dart';
+import 'features/pomodoro/data/repository/prefs_pomodoro_settings_repository.dart';
+import 'features/pomodoro/domain/usecases/load_pomodoro_settings_usecase.dart';
+import 'features/pomodoro/domain/usecases/save_pomodoro_settings_usecase.dart';
+import 'features/pomodoro/presentation/providers/pomodoro_provider.dart';
+import 'features/pomodoro/presentation/providers/pomodoro_reward_recorder.dart';
 
 //Recibe los mensajes de FCM con la app cerrada o en segundo plano.
 @pragma('vm:entry-point')
@@ -60,7 +66,7 @@ Future<void> main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
   await initializeDateFormatting('es');
-  
+
   final feedRepository = FirebaseFeedRepository();
   final authRepository = FirebaseAuthRepository();
   final walletRepository = FirestoreWalletRepository();
@@ -68,6 +74,7 @@ Future<void> main() async {
     remote: MockApiTaskRemoteDataSource(createDioClient()),
     local: SqfliteTaskLocalDataSource(),
   );
+  final settingsRepository = PrefsPomodoroSettingsRepository();
 
   runApp(
     MultiProvider(
@@ -122,15 +129,28 @@ Future<void> main() async {
           create: (_) => FeedProvider(
             watchFeed: WatchFeedUseCase(feedRepository),
             publishPost: PublishPostUseCase(feedRepository),
-            setLike: SetLikeUseCase(feedRepository)
-            ),
-          update: (_, auth, feed) => feed!..setUser(auth.user)),
+            setLike: SetLikeUseCase(feedRepository),
+          ),
+          update: (_, auth, feed) => feed!..setUser(auth.user),
+        ),
 
         // ── Alex M.: PomodoroProvider con sus casos de uso ──
+        ChangeNotifierProvider(
+          create: (context) => PomodoroProvider(
+            recorder: PomodoroRewardRecorder(
+              tasks: context.read<TaskProvider>(),
+              wallet: context.read<WalletProvider>(),
+            ),
+            loadSettings: LoadPomodoroSettingsUseCase(settingsRepository),
+            saveSettings: SavePomodoroSettingsUseCase(settingsRepository),
+            demoMode: Env.fastPomodoro,
+            alarm: LocalNotificationPomodoroAlarm(),
+          )..loadSettings(),
+        ),
 
         // ── Nehemías: EstimateTaskDurationUseCase (Gemini) ──
         Provider<DurationEstimator>(
-        create: (_) => GeminiDurationEstimator(),
+          create: (_) => GeminiDurationEstimator(),
         ),
       ],
       child: const HamtimerApp(),
