@@ -59,7 +59,6 @@ class GeminiDurationEstimator implements DurationEstimator {
       if (estimate != null) return estimate;
       AppLogger.warning('gemini', 'Respuesta no válida: $text');
     } on DioException catch (error, stack) {
-      
       // El cuerpo del error trae la causa
       AppLogger.error('gemini', 'Falló la estimación: ${error.response?.data}', error, stack);
     } on Exception catch (error, stack) {
@@ -97,7 +96,7 @@ class GeminiDurationEstimator implements DurationEstimator {
     },
   };
 
-  /// Saca el texto de la primera respuesta 
+  /// Saca el texto de la primera respuesta
   static String? extractText(Map<String, dynamic>? body) {
     final candidates = body?['candidates'];
     if (candidates is! List || candidates.isEmpty) return null;

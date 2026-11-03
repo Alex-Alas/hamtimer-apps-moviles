@@ -3,7 +3,7 @@ import '../entities/task.dart';
 import '../entities/task_category.dart';
 import '../repositories/duration_estimator.dart';
 
-/// Estima cuántos Pomodoros tomará una tarea 
+/// Estima cuántos Pomodoros tomará una tarea
 class EstimateTaskDurationUseCase {
   const EstimateTaskDurationUseCase(this._repository);
 
