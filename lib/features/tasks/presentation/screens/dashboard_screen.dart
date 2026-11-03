@@ -11,8 +11,7 @@ import '../../../../shared/widgets/message_state.dart';
 import '../../../../shared/widgets/points_chip.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../camera/presentation/providers/wallet_provider.dart';
-//TODO: Uncomment when ready
-// import '../../../pomodoro/presentation/providers/pomodoro_provider.dart';
+import '../../../pomodoro/presentation/providers/pomodoro_provider.dart';
 import '../../domain/entities/task.dart';
 import '../../domain/entities/task_filter.dart';
 import '../providers/task_provider.dart';
@@ -78,13 +77,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   void _deleteTask(Task task) {
     final tasks = context.read<TaskProvider>();
-    //TODO: UNCOMMENT WHEN READY
-    // final pomodoro = context.read<PomodoroProvider>();
+    final pomodoro = context.read<PomodoroProvider>();
     final analytics = context.read<AnalyticsService>();
     final messenger = ScaffoldMessenger.of(context);
     tasks.hideTask(task);
-    //TODO: UNCOMMENT WHEN READY
-    // pomodoro.removeFromQueue(task);
+    pomodoro.removeFromQueue(task);
     AppFeedback.showUndo(
       context,
       'Tarea "${task.title}" borrada',
@@ -115,8 +112,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
     if (confirmed != true || !mounted) return;
     final auth = context.read<AuthProvider>();
-    //TODO: UNCOMMENT WHEN READY
-    // context.read<PomodoroProvider>().endSession();
+    // La sesión de Pomodoro tiene tareas de este usuario: se limpia al salir.
+    context.read<PomodoroProvider>().endSession();
     await context.read<AnalyticsService>().logEvent('logout');
     await auth.signOut();
   }

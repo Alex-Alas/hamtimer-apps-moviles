@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:hamtimer/features/camera/presentation/providers/wallet_provider.dart';
 import 'package:hamtimer/features/feed/presentation/screens/feed_screen.dart';
 import 'package:hamtimer/shared/logging/app_logger.dart';
@@ -13,6 +14,7 @@ import '../features/tasks/presentation/screens/dashboard_screen.dart';
 import '../features/tasks/presentation/screens/new_task_screen.dart';
 import '../features/tasks/domain/entities/task.dart';
 import '../features/camera/presentation/screens/camera_screen.dart';
+import '../features/pomodoro/presentation/screens/pomodoro_screen.dart';
 import '../shared/services/analytics_service.dart';
 import '../shared/widgets/bottom_nav_bar.dart';
 import '../shared/providers/connectivity_provider.dart';
@@ -31,6 +33,9 @@ class HomeShell extends StatefulWidget {
 
 class _HomeShellState extends State<HomeShell> {
   HomeTab _tab = HomeTab.dashboard;
+  /// Para salir con el botón atrás hay que tocarlo dos veces seguidas.
+  DateTime? _lastBackPress;
+
   int _formSession = 0;
 
   StreamSubscription<PushMessage>? _pushSubscription;
@@ -67,6 +72,24 @@ class _HomeShellState extends State<HomeShell> {
     if (tab == HomeTab.newTask) _formSession++;
   });
     context.read<AnalyticsService>().logScreen(tab.screenName);
+  }
+
+  /// Botón atrás: desde otra pestaña vuelve a Tareas; desde Tareas avisa y
+  /// sale solo si se toca otra vez en los siguientes 2 segundos.
+  void _onBackPressed(bool didPop, Object? result) {
+    if (didPop) return;
+    if (_tab != HomeTab.dashboard) {
+      _selectTab(HomeTab.dashboard);
+      return;
+    }
+    final now = DateTime.now();
+    final last = _lastBackPress;
+    if (last != null && now.difference(last) < const Duration(seconds: 2)) {
+      SystemNavigator.pop();
+      return;
+    }
+    _lastBackPress = now;
+    AppFeedback.show(context, 'Toca otra vez para salir');
   }
 
   void _onTaskCreated(Task task) {
@@ -116,42 +139,37 @@ class _HomeShellState extends State<HomeShell> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        bottom: false,
-        child: IndexedStack(
-          index: _tab.index,
-          children: [
-            // ── Gisi: DasshboardScreen ──
-            const DashboardScreen(),
-            // ── Alex M.: PomodoroScreen ──
-            const _Placeholder('Pantalla de Alex M. (Pomodoro)'),
-            // ── Nehemías: NewTaskScreen ──
-            NewTaskScreen(
-              key: ValueKey(_formSession),
-              onClose: () => _selectTab(HomeTab.dashboard),
-              onCreated: _onTaskCreated,
-            ),
-            // ── Alex: CameraScreen ──
-            CameraScreen(
-              isActive: _tab == HomeTab.camera,
-              onPublished: () => _selectTab(HomeTab.feed),
-            ),
-            // ── Armando: FeedScreen ──
-            const FeedScreen(),
-          ],
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: _onBackPressed,
+      child: Scaffold(
+        body: SafeArea(
+          bottom: false,
+          child: IndexedStack(
+            index: _tab.index,
+            children: [
+              // ── Gisi: DasshboardScreen ──
+              const DashboardScreen(),
+              // ── Alex M.: PomodoroScreen ──
+              const PomodoroScreen(),
+              // ── Nehemías: NewTaskScreen ──
+              NewTaskScreen(
+                key: ValueKey(_formSession),
+                onClose: () => _selectTab(HomeTab.dashboard),
+                onCreated: _onTaskCreated,
+              ),
+              // ── Alex: CameraScreen ──
+              CameraScreen(
+                isActive: _tab == HomeTab.camera,
+                onPublished: () => _selectTab(HomeTab.feed),
+              ),
+              // ── Armando: FeedScreen ──
+              const FeedScreen(),
+            ],
+          ),
         ),
+        bottomNavigationBar: HomeBottomNavBar(selected: _tab, onSelected: _selectTab),
       ),
-      bottomNavigationBar: HomeBottomNavBar(selected: _tab, onSelected: _selectTab),
     );
   }
-}
-
-class _Placeholder extends StatelessWidget {
-  const _Placeholder(this.text);
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) => Center(child: Text(text));
 }

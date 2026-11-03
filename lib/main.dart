@@ -30,7 +30,7 @@ import 'features/tasks/domain/usecases/get_tasks_usecase.dart';
 import 'features/tasks/domain/usecases/update_task_usecase.dart';
 import 'features/tasks/presentation/providers/task_provider.dart';
 import 'features/tasks/data/datasource/gemini_duration_estimator.dart';
-import 'features/tasks/domain/repositories/duration_estimator.dart';
+import 'features/tasks/domain/usecases/estimate_task_duration_usecase.dart';
 import 'firebase_options.dart';
 import 'shared/providers/connectivity_provider.dart';
 import 'shared/services/analytics_service.dart';
@@ -149,9 +149,7 @@ Future<void> main() async {
         ),
 
         // ── Nehemías: EstimateTaskDurationUseCase (Gemini) ──
-        Provider<DurationEstimator>(
-          create: (_) => GeminiDurationEstimator(),
-        ),
+        Provider(create: (_) => EstimateTaskDurationUseCase(GeminiDurationEstimator())),
       ],
       child: const HamtimerApp(),
     ),
