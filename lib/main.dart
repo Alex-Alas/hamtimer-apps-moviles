@@ -20,6 +20,12 @@ import 'firebase_options.dart';
 import 'shared/providers/connectivity_provider.dart';
 import 'shared/services/analytics_service.dart';
 import 'shared/services/connectivity_service.dart';
+import 'features/auth/data/repository/firebase_auth_repository.dart';
+import 'features/auth/domain/usecases/sign_in_usecase.dart';
+import 'features/auth/domain/usecases/sign_out_usecase.dart';
+import 'features/auth/domain/usecases/sign_up_usecase.dart';
+import 'features/auth/domain/usecases/watch_auth_state_usecase.dart';
+import 'features/auth/presentation/providers/auth_provider.dart';
 
 //Recibe los mensajes de FCM con la app cerrada o en segundo plano.
 @pragma('vm:entry-point')
@@ -38,7 +44,8 @@ Future<void> main() async {
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
   await initializeDateFormatting('es');
 
-  // final walletRepository = FirestoreWalletRepository();
+  final authRepository = FirebaseAuthRepository();
+  final walletRepository = FirestoreWalletRepository();
 
   runApp(
     MultiProvider(
@@ -49,7 +56,14 @@ Future<void> main() async {
         // Estado global.
         ChangeNotifierProvider(create: (_) => ConnectivityProvider(ConnectivityPlusService())),
 
-        // ── Jade: AuthProvider (casos de uso de auth) ──
+        ChangeNotifierProvider(
+          create: (_) => AuthProvider(
+            watchAuthState: WatchAuthStateUseCase(authRepository),
+            signIn: SignInUseCase(authRepository),
+            signUp: SignUpUseCase(authRepository),
+            signOut: SignOutUseCase(authRepository),
+          ),
+        ),
 
         // ── Gisi: TaskProvider con sus casos de uso (ChangeNotifierProxyProvider con AuthProvider) ──
 
